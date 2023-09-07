@@ -1,0 +1,51 @@
+name: Tests deployment script
+
+on:
+    # push:
+    #     branches:
+    #         - main
+    workflow_dispatch:
+    # schedule:
+    #     - cron: "*/10 * * * *"
+    #     - cron: "*/20 * * * *"
+    #     - cron: "*/30 * * * *"
+
+env:
+    DEBUG: ${{ vars.DEBUG }}
+
+jobs:
+    test-scrip:
+        strategy:
+          fail-fast: false
+          matrix:
+            node-version: ['16.x', '17.x', '18.x'] 
+            npm-version: ['7', '8']
+
+        name: Test script ${{ matrix.node-version }} ${{ matrix.npm-version }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@v3
+              with:
+                  repository: enginegh/pages-cdn
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              id: setup-node
+              with:
+                  cache: npm
+
+            - name: Install dependencies
+              run: |
+                  npm install
+
+            - name: Setup FFmpeg
+              uses: FedericoCarboni/setup-ffmpeg@v2
+
+            - name: Run test script
+              timeout-minutes: 60
+              env:
+                  CONFIG: ${{ secrets.CONFIG }}
+                  NODE_OPTIONS: --openssl-legacy-provider
+              run: |
+                  npm start
